@@ -106,7 +106,7 @@ def monitorar_sessoes():
                     # Calcular o tempo de sessão
                     tempo_online = (datetime.now(timezone.utc) - login_time).total_seconds() #/ 60  # Convertido para minutos
 
-                    if tempo_online > 2:  # Sessão maior que 60 minutos
+                    if tempo_online > 1:  # Sessão maior que 60 minutos
                         user_id = sessao["user_id"]
                         LOGGER.warning(f"⚠️ Usuário {user_id} logado há {tempo_online:.2f} minutos!")
 
