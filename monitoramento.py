@@ -1,13 +1,13 @@
 from flask import Flask, request, jsonify
 import threading
 import queue
-import pymysql
 from dotenv import load_dotenv
 import os
 import logging
 from datetime import datetime, timedelta, timezone
 import requests
 from urllib.parse import urlparse
+import psycopg2
 
 load_dotenv()
 
