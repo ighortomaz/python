@@ -7,6 +7,7 @@ import os
 import logging
 from datetime import datetime, timedelta, timezone
 import requests
+from urllib.parse import urlparse
 
 load_dotenv()
 
@@ -26,12 +27,20 @@ app = Flask(__name__)
 event_queue = queue.Queue()
 
 # Configurar conexão com o MySQL
+
+database_url = 'postgresql://ighortomaz:63UGnZSKTjkSy8uwggrcogdOcA89CB91@dpg-cvir99muk2gs73av0dag-a.virginia-postgres.render.com/monitoramento_db_k8n6'
+
+
+# Parse a URL para extrair as partes do banco de dados
+url = urlparse(database_url)
+
+# Configurar a conexão
 db_config = {
-    "host": "localhost",
-    "user": "ighor",
-    "password": "mengo",
-    "database": "monitoramento",
-    "cursorclass": pymysql.cursors.DictCursor
+    "host": url.hostname,
+    "port": url.port,
+    "user": url.username,
+    "password": url.password,
+    "database": url.path[1:]  # O nome do banco está após a primeira barra "/"
 }
 
 url_operador = "https://exemplo.com/alerta-sessao"
