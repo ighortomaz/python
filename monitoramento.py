@@ -7,7 +7,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 import requests
 from urllib.parse import urlparse
-import psycopg2
+import psycopg2  # Substituímos pymysql por psycopg2 para PostgreSQL
 
 load_dotenv()
 
@@ -26,10 +26,9 @@ app = Flask(__name__)
 # Criar uma fila para processar eventos de forma assíncrona
 event_queue = queue.Queue()
 
-# Configurar conexão com o MySQL
+# Configurar conexão com o PostgreSQL
 
 database_url = 'postgresql://ighortomaz:63UGnZSKTjkSy8uwggrcogdOcA89CB91@dpg-cvir99muk2gs73av0dag-a.virginia-postgres.render.com/monitoramento_db_k8n6'
-
 
 # Parse a URL para extrair as partes do banco de dados
 url = urlparse(database_url)
@@ -46,7 +45,9 @@ db_config = {
 url_operador = "https://exemplo.com/alerta-sessao"
 
 def get_db_connection():
-    return pymysql.connect(**db_config)
+    # Usamos psycopg2 para conectar ao PostgreSQL
+    conn = psycopg2.connect(**db_config)
+    return conn
 
 def processar_eventos():
     """ Processa eventos do webhook e insere no banco de dados """
@@ -60,7 +61,7 @@ def processar_eventos():
         timestamp = dados.get("timestamp", datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
 
         try:
-            conn = pymysql.connect(**db_config)
+            conn = get_db_connection()
             with conn.cursor() as cursor:
                 if evento == "login":
                     cursor.execute(""" 
@@ -68,7 +69,7 @@ def processar_eventos():
                         VALUES (%s, %s);
                     """, (user_id, timestamp))
                 elif evento == "logout":
-                    cursor.execute("""
+                    cursor.execute(""" 
                         UPDATE sessoes 
                         SET logout_time = %s 
                         WHERE user_id = %s AND logout_time IS NULL;
@@ -99,7 +100,7 @@ def monitorar_sessoes():
         try:
             conn = get_db_connection()
             with conn.cursor() as cursor:
-                cursor.execute("""
+                cursor.execute(""" 
                     SELECT id, user_id, login_time 
                     FROM sessoes 
                     WHERE logout_time IS NULL AND alerta_enviado = FALSE;
@@ -127,7 +128,7 @@ def monitorar_sessoes():
                             LOGGER.error(f"Erro ao enviar alerta: {e}")
 
                         # Atualizar o banco para marcar o alerta como enviado
-                        cursor.execute("""
+                        cursor.execute(""" 
                             UPDATE sessoes 
                             SET alerta_enviado = TRUE 
                             WHERE id = %s;
